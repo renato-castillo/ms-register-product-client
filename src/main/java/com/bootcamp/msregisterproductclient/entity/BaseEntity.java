@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class BaseEntity {
+public abstract class BaseEntity {
     @Id
     private String id;
 
