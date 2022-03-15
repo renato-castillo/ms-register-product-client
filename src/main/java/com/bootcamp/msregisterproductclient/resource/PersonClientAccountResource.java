@@ -74,6 +74,13 @@ public class PersonClientAccountResource extends MapperUtil {
                 .map(x-> map(x,PersonClientAccountDto.class));
     }
 
+    public Mono<PersonClientAccountDto> findByDocumentNumberDocumentTypeAndAccountNumber(String documentNumber,
+                                                                                         String documentType,
+                                                                                         String accountNumber) {
+        return iPersonClientAccountService.findByDocumentNumberAndDocumentTypeAndAccountNumber(documentNumber,
+                documentType,accountNumber).map(x -> map(x, PersonClientAccountDto.class));
+    }
+
     public Mono<Void> delete(PersonClientAccountDto personClientAccountDto)
     {
         return iPersonClientAccountService.findById(personClientAccountDto.getId())

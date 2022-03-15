@@ -24,8 +24,10 @@ public class PersonClientAccountController {
     }
 
     @GetMapping
-    public Flux<PersonClientAccountDto> findAll(){
-        return personClientAccountResource.findAll();
+    public Mono<PersonClientAccountDto> findAll(){
+        //return personClientAccountResource.findAll();
+        return personClientAccountResource.findByDocumentNumberDocumentTypeAndAccountNumber("20469430765",
+                "DNI", "2633116211");
     }
 
     @DeleteMapping
