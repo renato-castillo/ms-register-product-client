@@ -4,6 +4,7 @@ import com.bootcamp.msregisterproductclient.dto.CompanyClientAccountDto;
 import com.bootcamp.msregisterproductclient.dto.PersonClientAccountDto;
 import com.bootcamp.msregisterproductclient.entity.CompanyClientAccount;
 import com.bootcamp.msregisterproductclient.entity.PersonClientAccount;
+import com.bootcamp.msregisterproductclient.exception.ModelNotFoundException;
 import com.bootcamp.msregisterproductclient.service.IPersonClientAccountService;
 import com.bootcamp.msregisterproductclient.util.MapperUtil;
 import org.bson.types.ObjectId;
@@ -61,7 +62,7 @@ public class PersonClientAccountResource extends MapperUtil {
 
     public Mono<PersonClientAccountDto> update(PersonClientAccountDto personClientAccountDto){
         return iPersonClientAccountService.findById(personClientAccountDto.getId())
-                .switchIfEmpty(Mono.error(new Exception()))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException()))
                 .flatMap(p->{
                     PersonClientAccount personClientAccount =  map(personClientAccountDto,PersonClientAccount.class);
                     personClientAccount.setUpdatedAt(LocalDateTime.now());
@@ -70,7 +71,7 @@ public class PersonClientAccountResource extends MapperUtil {
     }
     public Mono<PersonClientAccountDto> findById(String id){
         return iPersonClientAccountService.findById(id)
-                .switchIfEmpty(Mono.error(new Exception()))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException()))
                 .map(x-> map(x,PersonClientAccountDto.class));
     }
 
@@ -78,13 +79,15 @@ public class PersonClientAccountResource extends MapperUtil {
                                                                                          String documentType,
                                                                                          String accountNumber) {
         return iPersonClientAccountService.findByDocumentNumberAndDocumentTypeAndAccountNumber(documentNumber,
-                documentType,accountNumber).map(x -> map(x, PersonClientAccountDto.class));
+                documentType,accountNumber)
+                .switchIfEmpty(Mono.error(new ModelNotFoundException()))
+                .map(x -> map(x, PersonClientAccountDto.class));
     }
 
     public Mono<Void> delete(PersonClientAccountDto personClientAccountDto)
     {
         return iPersonClientAccountService.findById(personClientAccountDto.getId())
-                .switchIfEmpty(Mono.error(new Exception()))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException()))
                 .flatMap(x-> iPersonClientAccountService.deleteById(personClientAccountDto.getId()));
     }
 }

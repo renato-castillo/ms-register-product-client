@@ -28,6 +28,13 @@ public class PersonClientAccountController {
         return personClientAccountResource.findAll();
     }
 
+    @GetMapping("/document/{document}/type/{type}/account/{account}")
+    public Mono<PersonClientAccountDto> findByDocumentAndDocumentTypeAndAccount(@PathVariable String document,
+                                                                                @PathVariable String type,
+                                                                                @PathVariable String account) {
+        return personClientAccountResource.findByDocumentNumberDocumentTypeAndAccountNumber(document, type, account);
+    }
+
     @DeleteMapping
     public Mono<Void> delete(@RequestBody PersonClientAccountDto personClientAccountDto){
         return personClientAccountResource.delete(personClientAccountDto);

@@ -47,8 +47,18 @@ public class CompanyClientAccountResource  extends MapperUtil {
                     return iCompanyClientAccountService.save(companyClientAccount).map(y->map(y,CompanyClientAccountDto.class));
                 });
     }
+
     public Mono<CompanyClientAccountDto> findById(String id){
         return iCompanyClientAccountService.findById(id)
+                .switchIfEmpty(Mono.error(new Exception()))
+                .map(x-> map(x,CompanyClientAccountDto.class));
+    }
+
+    public Mono<CompanyClientAccountDto> findByDocumentNumberAndDocumentTypeAndAccount(String documentNumber,
+                                                                                       String documentType,
+                                                                                       String account){
+        return iCompanyClientAccountService.findByDocumentNumberAndDocumentTypeAndAccount(documentNumber,
+                        documentType, account)
                 .switchIfEmpty(Mono.error(new Exception()))
                 .map(x-> map(x,CompanyClientAccountDto.class));
     }

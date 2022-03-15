@@ -15,6 +15,7 @@ public class CompanyClientAccount extends BaseEntity{
     private String accountNumber;
     private LocalDateTime openingDate;
     private TypeAccount typeAccount;
+    private Float balance;
     private Client client;
     private List<Responsible> responsible;
 }
