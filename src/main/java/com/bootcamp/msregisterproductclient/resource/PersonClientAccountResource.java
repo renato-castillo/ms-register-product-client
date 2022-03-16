@@ -26,7 +26,7 @@ public class PersonClientAccountResource extends MapperUtil {
         personClientAccount.setId(new ObjectId().toString());
         personClientAccount.setCreatedAt(LocalDateTime.now());
 
-        String typeAccount = personClientAccount.getTypeAccount().getName() ;
+        String typeAccount = personClientAccount.getTypeAccount().getName();
         String typeClient = personClientAccount.getClient().getClientType();
         if(typeAccount.equals(TypeAccount.SAVINGACCOUNT.name()) && typeClient.equals(TypeClient.Person.name())){
             Flux<PersonClientAccountDto> temp = iPersonClientAccountService.findAll()
