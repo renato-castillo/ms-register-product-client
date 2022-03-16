@@ -15,6 +15,7 @@ public class PersonClientAccountDto {
     private String id;
     private String code;
     private String accountNumber;
+    private Float balance;
     private LocalDateTime openingDate;
     private TypeAccount typeAccount;
     private Client client;

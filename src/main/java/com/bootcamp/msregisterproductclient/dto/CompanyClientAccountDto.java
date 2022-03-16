@@ -18,6 +18,7 @@ public class CompanyClientAccountDto {
     private String code;
     private String accountNumber;
     private LocalDateTime openingDate;
+    private Float balance;
     private boolean state;
     private Client client;
     private TypeAccount typeAccount;
