@@ -16,12 +16,12 @@ import reactor.core.publisher.Mono;
 public class CreditCardServiceImpl implements ICreditCardService {
 
     @Autowired
-    private WebClient client;
+    private WebClient.Builder client;
 
     @Override
     public Flux<CreditCardDto> findByClientType(String clientType) {
 
-        return client.get()
+        return client.build().get()
                 .uri("/creditcard")
                 .retrieve()
                 .bodyToFlux(CreditCardDto.class);
@@ -31,14 +31,14 @@ public class CreditCardServiceImpl implements ICreditCardService {
     @Override
     public Mono<CreditCardDto> findByName(String name) {
 
-        return client.get().uri("/creditcard/name/" + name)
+        return client.build().get().uri("/creditcard/name/" + name)
                 .retrieve()
                 .bodyToMono(CreditCardDto.class);
     }
 
     @Override
     public Mono<CreditCardDto> findByNameAndClientType(String name, String clientType) {
-        return client.get()
+        return client.build().get()
                 .uri("/creditcard/name/".concat(name).concat("/client-type/").concat(clientType))
                 .retrieve()
                 .bodyToMono(CreditCardDto.class);

@@ -36,4 +36,10 @@ public class PersonClientAccountServiceImpl implements IPersonClientAccountServi
         return iPersonClientAccountRepository.findPersonClientAccountByClient_NumberDocumentAndClient_DocumentTypeAndAccountNumber(documentNumber,
                 documentType, accountNumber);
     }
+
+    @Override
+    public Flux<PersonClientAccount> findByDocumentNumberAndDocumentTypeAndTypeAccountName(String documentNumber, String documentType, String typeAccountName) {
+        return iPersonClientAccountRepository.findPersonClientAccountByClient_NumberDocumentAndClient_DocumentTypeAndTypeAccount_NameAndStateIsTrue(documentNumber,
+                documentType, typeAccountName);
+    }
 }

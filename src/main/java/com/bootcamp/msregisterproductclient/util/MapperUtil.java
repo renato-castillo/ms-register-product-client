@@ -21,16 +21,5 @@ public  class MapperUtil {
                 .collect(Collectors.toList());
     }
 
-    public enum TypeAccount{
-        CURRENTACCOUNT,
-        SAVINGACCOUNT,
-        DEPOSITACCOUNT
-    }
-
-    public enum TypeClient{
-        Company,
-        Person,
-    }
-
 
 }
