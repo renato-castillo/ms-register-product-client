@@ -15,7 +15,7 @@ public class CreditCardClientController {
     private CreditCardClientResource creditCardClientResource;
 
    @PostMapping
-    public Mono<CreditCardClientDto> create(@RequestBody CreditCardClientDto creditCardClientDto){
+    public Mono<?> create(@RequestBody CreditCardClientDto creditCardClientDto){
         return creditCardClientResource.create(creditCardClientDto);
     }
     @PutMapping

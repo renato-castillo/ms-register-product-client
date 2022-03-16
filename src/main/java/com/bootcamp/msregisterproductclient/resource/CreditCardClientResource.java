@@ -3,6 +3,7 @@ package com.bootcamp.msregisterproductclient.resource;
 import com.bootcamp.msregisterproductclient.dto.CreditCardClientDto;
 import com.bootcamp.msregisterproductclient.dto.CreditClientDto;
 import com.bootcamp.msregisterproductclient.entity.CreditCardClient;
+import com.bootcamp.msregisterproductclient.exception.GenericException;
 import com.bootcamp.msregisterproductclient.service.ICreditCardClientService;
 import com.bootcamp.msregisterproductclient.webclient.ICreditCardService;
 import com.bootcamp.msregisterproductclient.webclient.dto.CreditCardDto;
@@ -27,26 +28,16 @@ public class CreditCardClientResource extends ModelMapper {
     @Autowired
     private ICreditCardService creditCardService;
 
-    public Mono<CreditCardClientDto> create(CreditCardClientDto creditCardClientDto) {
+    public Mono<?> create(CreditCardClientDto creditCardClientDto) {
         CreditCardClient creditCardClient = map(creditCardClientDto, CreditCardClient.class);
         creditCardClient.setId(new ObjectId().toString());
         creditCardClient.setCreatedAt(LocalDateTime.now());
 
         return creditCardService.findByNameAndClientType(creditCardClientDto.getCreditCard().getName(),
-                creditCardClientDto.getClient().getClientType()).switchIfEmpty(Mono.error(new Exception()))
+                creditCardClientDto.getClient().getClientType()).switchIfEmpty(Mono.error(new GenericException("Credit card type not found")))
                 .flatMap(x -> Mono.from(iCreditCardClientService.findAll().filter(c -> c.getClient().getNumberDocument().equals(creditCardClientDto.getClient().getNumberDocument()))
                         .switchIfEmpty(iCreditCardClientService.save(creditCardClient))
-                        .map(y -> creditCardClientDto)));
-        /*
-        Flux<CreditCardClientDto> temp = iCreditCardClientService.findAll()
-                .filter(t->t.getClient().getNumberDocument().equals(creditCardClientDto.getClient().getNumberDocument()))
-                .switchIfEmpty(iCreditCardClientService.save(creditCardClient))
-                .map(et-> creditCardClientDto);
-
-
-
-        return Mono.from(temp);
-         */
+                        .map(y -> Mono.error(new GenericException("Credit card for this client already exists")))));
     }
 
     public Flux<CreditCardClientDto> findAll(){

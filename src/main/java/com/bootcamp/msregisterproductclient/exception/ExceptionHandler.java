@@ -26,4 +26,11 @@ public class ExceptionHandler {
         return Mono.just(new ExceptionResponse(LocalDateTime.now(), e.getMessage()));
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @org.springframework.web.bind.annotation.ExceptionHandler(value = GenericException.class)
+    public Mono<ExceptionResponse> manageGenericxception(GenericException e) {
+        log.error("Generic exception: {}", e);
+        return Mono.just(new ExceptionResponse(LocalDateTime.now(), e.getMessage()));
+    }
+
 }
