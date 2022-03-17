@@ -1,13 +1,12 @@
 package com.bootcamp.msregisterproductclient.resource;
 
-import com.bootcamp.msregisterproductclient.dto.CompanyClientAccountDto;
 import com.bootcamp.msregisterproductclient.dto.PersonClientAccountDto;
-import com.bootcamp.msregisterproductclient.entity.CompanyClientAccount;
 import com.bootcamp.msregisterproductclient.entity.PersonClientAccount;
 import com.bootcamp.msregisterproductclient.entity.TypeAccount;
 import com.bootcamp.msregisterproductclient.exception.GenericException;
 import com.bootcamp.msregisterproductclient.exception.ModelNotFoundException;
 import com.bootcamp.msregisterproductclient.service.IPersonClientAccountService;
+import com.bootcamp.msregisterproductclient.util.AccountValidationCreationService;
 import com.bootcamp.msregisterproductclient.util.MapperUtil;
 import com.bootcamp.msregisterproductclient.webclient.IPersonalAccountService;
 import com.bootcamp.msregisterproductclient.webclient.dto.PersonalAccountDto;
@@ -29,19 +28,15 @@ public class PersonClientAccountResource extends MapperUtil {
     @Autowired
     private IPersonalAccountService personalAccountService;
 
-    private Mono<Boolean> validateCreation(PersonalAccountDto personalAccountDto,
-                                           PersonClientAccountDto personClientAccountDto) {
+    @Autowired
+    private AccountValidationCreationService accountValidationCreationService;
 
-        return iPersonClientAccountService.findByDocumentNumberAndDocumentTypeAndTypeAccountName(personClientAccountDto.getClient().getNumberDocument(),
-                personClientAccountDto.getClient().getDocumentType(), personClientAccountDto.getTypeAccount().getName())
-                .collectList()
-                .flatMap(x -> {
-                    if(x.size() == personalAccountDto.getMaxPerClient()) {
-                        return Mono.error(new GenericException("Limit account per client exceed"));
-                    }
+    private Mono<PersonalAccountDto> validate(PersonClientAccountDto personClientAccountDto) {
 
-                    return Mono.just(true);
-                });
+        return accountValidationCreationService.validateTypeAccountExists(personClientAccountDto)
+                .flatMap(accountType -> accountValidationCreationService.validateMaxPerClient(accountType, personClientAccountDto).map(maxClientVal -> accountType).onErrorResume(Mono::error)
+                        .flatMap(z -> accountValidationCreationService.validateOpenBalance(accountType, personClientAccountDto).map(a -> accountType))).onErrorResume(Mono::error)
+                .onErrorResume(Mono::error);
     }
 
     public Mono<PersonClientAccountDto> create(PersonClientAccountDto personClientAccountDto){
@@ -50,14 +45,13 @@ public class PersonClientAccountResource extends MapperUtil {
         personClientAccount.setCreatedAt(LocalDateTime.now());
 
         if(personClientAccountDto.getClient().getClientType().equalsIgnoreCase("PERSONAL")) {
-            return personalAccountService.findByName(personClientAccountDto.getTypeAccount().getName()).onErrorResume(Mono::error)
-                    .flatMap(x -> validateCreation(x, personClientAccountDto).flatMap(bool -> {
+            return validate(personClientAccountDto).flatMap(x -> {
                         String account = UUID.randomUUID().toString();
                         personClientAccount.setTypeAccount(new TypeAccount(x.getName(), x.getMaxMonthlyMovements()));
                         personClientAccount.setAccountNumber(account);
 
                         return iPersonClientAccountService.save(personClientAccount).map(y -> map(y, PersonClientAccountDto.class));
-                    }).onErrorResume(Mono::error));
+                    }).onErrorResume(Mono::error);
         }
 
         return Mono.error(new GenericException("Client Type Not Supported"));

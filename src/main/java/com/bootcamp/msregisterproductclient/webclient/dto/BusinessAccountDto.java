@@ -13,4 +13,6 @@ public class BusinessAccountDto {
 
     private Integer maxPerClient;
 
+    private Float minOpenBalance;
+
 }

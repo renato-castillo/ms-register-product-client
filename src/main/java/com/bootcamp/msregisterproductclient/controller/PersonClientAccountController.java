@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 public class PersonClientAccountController {
 
     @Autowired
-    PersonClientAccountResource personClientAccountResource;
+    private PersonClientAccountResource personClientAccountResource;
 
     @PostMapping
     public Mono<PersonClientAccountDto> create(@RequestBody PersonClientAccountDto personClientAccountDto){

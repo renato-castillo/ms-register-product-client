@@ -20,4 +20,6 @@ public class PersonalAccountDto {
     private Integer uniqueMovementDay;
 
     private Integer maxPerClient;
+
+    private Float minOpenBalance;
 }

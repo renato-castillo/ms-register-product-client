@@ -5,6 +5,7 @@ import com.bootcamp.msregisterproductclient.dto.PersonClientAccountDto;
 import com.bootcamp.msregisterproductclient.entity.CompanyClientAccount;
 import com.bootcamp.msregisterproductclient.entity.TypeAccount;
 import com.bootcamp.msregisterproductclient.exception.GenericException;
+import com.bootcamp.msregisterproductclient.util.AccountValidationCreationService;
 import com.bootcamp.msregisterproductclient.util.MapperUtil;
 import com.bootcamp.msregisterproductclient.service.ICompanyClientAccountService;
 import com.bootcamp.msregisterproductclient.webclient.IBusinessAccountService;
@@ -29,19 +30,14 @@ public class CompanyClientAccountResource  extends MapperUtil {
     @Autowired
     private IBusinessAccountService businessAccountService;
 
-    private Mono<Boolean> validateCreation(BusinessAccountDto businessAccountDto,
-                                           CompanyClientAccountDto companyClientAccountDto) {
+    @Autowired
+    private AccountValidationCreationService accountValidationCreationService;
 
-        return iCompanyClientAccountService.findByDocumentNumberAndDocumentTypeAndTypeAccountName(companyClientAccountDto.getClient().getNumberDocument(),
-                        companyClientAccountDto.getClient().getDocumentType(), companyClientAccountDto.getTypeAccount().getName())
-                .collectList()
-                .flatMap(x -> {
-                    if(x.size() == businessAccountDto.getMaxPerClient()) {
-                        return Mono.error(new GenericException("Limit account per client exceed"));
-                    }
-
-                    return Mono.just(true);
-                });
+    private Mono<BusinessAccountDto> validate(CompanyClientAccountDto companyClientAccountDto) {
+        return accountValidationCreationService.validateTypeAccountExists(companyClientAccountDto)
+                .flatMap(accountType -> accountValidationCreationService.validateMaxPerClient(accountType, companyClientAccountDto).map(maxClientVal -> accountType).onErrorResume(Mono::error)
+                        .flatMap(z -> accountValidationCreationService.validateOpenBalance(accountType, companyClientAccountDto).map(a -> accountType))).onErrorResume(Mono::error)
+                .onErrorResume(Mono::error);
     }
 
     public Mono<CompanyClientAccountDto> create(CompanyClientAccountDto companyClientAccountDto){
@@ -51,14 +47,13 @@ public class CompanyClientAccountResource  extends MapperUtil {
         if(companyClientAccount.getClient().getClientType().equalsIgnoreCase("BUSINESS")) {
             businessAccountService.findByName(companyClientAccountDto.getTypeAccount().getName())
                     .switchIfEmpty(Mono.error(new GenericException("Account Type Not Found")))
-                    .flatMap(x -> {
+                    .flatMap(y -> validate(companyClientAccountDto).flatMap(x -> {
                         String account = UUID.randomUUID().toString();
                         companyClientAccountDto.setTypeAccount(new TypeAccount(x.getName(), x.getMaxPerClient()));
                         companyClientAccountDto.setAccountNumber(account);
 
                         return iCompanyClientAccountService.save(companyClientAccount).map(entity -> map(entity, CompanyClientAccountDto.class));
-
-                    }).onErrorResume(Mono::error);
+                    })).onErrorResume(Mono::error);
         }
 
         return Mono.error(new GenericException("Client Type Not Supported"));
