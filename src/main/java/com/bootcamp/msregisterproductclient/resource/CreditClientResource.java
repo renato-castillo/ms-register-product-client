@@ -22,6 +22,8 @@ public class CreditClientResource extends MapperUtil {
     public Mono<CreditClientDto> create(CreditClientDto creditClientDto) {
         CreditClient creditClient = map(creditClientDto,CreditClient.class);
 
+        return Mono.just(creditClientDto);
+        /*
        if (creditClient.getClient().getClientType().equals(TypeClient.Company.name())){
             creditClient.setId(new ObjectId().toString());
             creditClient.setCreatedAt(LocalDateTime.now());
@@ -37,6 +39,8 @@ public class CreditClientResource extends MapperUtil {
                     .map(x->creditClientDto);
             return Mono.from(temp);
         }
+
+         */
 
     }
 

@@ -34,10 +34,9 @@ public class PersonClientAccountResource extends MapperUtil {
 
         return iPersonClientAccountService.findByDocumentNumberAndDocumentTypeAndTypeAccountName(personClientAccountDto.getClient().getNumberDocument(),
                 personClientAccountDto.getClient().getDocumentType(), personClientAccountDto.getTypeAccount().getName())
-                .switchIfEmpty(Mono.error(new GenericException("Account Type Not Exists")))
                 .collectList()
                 .flatMap(x -> {
-                    if(x.size() >= personalAccountDto.getMaxPerClient()) {
+                    if(x.size() == personalAccountDto.getMaxPerClient()) {
                         return Mono.error(new GenericException("Limit account per client exceed"));
                     }
 
@@ -50,14 +49,20 @@ public class PersonClientAccountResource extends MapperUtil {
         personClientAccount.setId(new ObjectId().toString());
         personClientAccount.setCreatedAt(LocalDateTime.now());
 
-        return personalAccountService.findByName(personClientAccountDto.getTypeAccount().getName()).onErrorResume(Mono::error)
-                .flatMap(x -> validateCreation(x, personClientAccountDto).flatMap(bool -> {
-                    String account = UUID.randomUUID().toString();
-                    personClientAccount.setTypeAccount(new TypeAccount(x.getName(), x.getMaxMonthlyMovements()));
-                    personClientAccount.setAccountNumber(account);
+        if(personClientAccountDto.getClient().getClientType().equalsIgnoreCase("PERSONAL")) {
+            return personalAccountService.findByName(personClientAccountDto.getTypeAccount().getName()).onErrorResume(Mono::error)
+                    .flatMap(x -> validateCreation(x, personClientAccountDto).flatMap(bool -> {
+                        String account = UUID.randomUUID().toString();
+                        personClientAccount.setTypeAccount(new TypeAccount(x.getName(), x.getMaxMonthlyMovements()));
+                        personClientAccount.setAccountNumber(account);
 
-                    return iPersonClientAccountService.save(personClientAccount).map(y -> map(y, PersonClientAccountDto.class));
-                }).onErrorResume(Mono::error));
+                        return iPersonClientAccountService.save(personClientAccount).map(y -> map(y, PersonClientAccountDto.class));
+                    }).onErrorResume(Mono::error));
+        }
+
+        return Mono.error(new GenericException("Client Type Not Supported"));
+
+
     }
 
     public Flux<PersonClientAccountDto> findAll(){

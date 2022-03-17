@@ -15,14 +15,16 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class CreditCardServiceImpl implements ICreditCardService {
 
+    private static final String BASE_URL = "lb://ms-creditcards";
+
     @Autowired
     private WebClient.Builder client;
 
     @Override
     public Flux<CreditCardDto> findByClientType(String clientType) {
 
-        return client.build().get()
-                .uri("/creditcard")
+        return client.baseUrl(BASE_URL).build().get()
+                .uri("/api/creditcard")
                 .retrieve()
                 .bodyToFlux(CreditCardDto.class);
 
@@ -31,14 +33,14 @@ public class CreditCardServiceImpl implements ICreditCardService {
     @Override
     public Mono<CreditCardDto> findByName(String name) {
 
-        return client.build().get().uri("/creditcard/name/" + name)
+        return client.baseUrl(BASE_URL).build().get().uri("/creditcard/name/" + name)
                 .retrieve()
                 .bodyToMono(CreditCardDto.class);
     }
 
     @Override
     public Mono<CreditCardDto> findByNameAndClientType(String name, String clientType) {
-        return client.build().get()
+        return client.baseUrl(BASE_URL).build().get()
                 .uri("/creditcard/name/".concat(name).concat("/client-type/").concat(clientType))
                 .retrieve()
                 .bodyToMono(CreditCardDto.class);
