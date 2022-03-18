@@ -28,7 +28,7 @@ public class AccountValidationCreationService {
     @Autowired
     private ICompanyClientAccountService companyClientAccountService;
 
-    public Mono<Boolean> validateOpenBalance(PersonalAccountDto personalAccountDto,
+    private Mono<Boolean> validateOpenBalance(PersonalAccountDto personalAccountDto,
                                              PersonClientAccountDto personClientAccountDto) {
 
         if(personClientAccountDto.getBalance() >= personalAccountDto.getMinOpenBalance()) {
@@ -38,7 +38,7 @@ public class AccountValidationCreationService {
         return Mono.error(new GenericException("Open Balance is not valid, the first balance will be :" + personalAccountDto.getMinOpenBalance()));
     }
 
-    public Mono<Boolean> validateOpenBalance(BusinessAccountDto businessAccountDto,
+    private Mono<Boolean> validateOpenBalance(BusinessAccountDto businessAccountDto,
                                              CompanyClientAccountDto companyClientAccountDto) {
 
         if(companyClientAccountDto.getBalance() >= businessAccountDto.getMinOpenBalance()) {
@@ -48,7 +48,7 @@ public class AccountValidationCreationService {
         return Mono.error(new GenericException("Open Balance is not valid, the first balance will be :" + businessAccountDto.getMinOpenBalance()));
     }
 
-    public Mono<Boolean> validateMaxPerClient(PersonalAccountDto personalAccountDto,
+    private Mono<Boolean> validateMaxPerClient(PersonalAccountDto personalAccountDto,
                                            PersonClientAccountDto personClientAccountDto) {
 
         return personClientAccountService.findByDocumentNumberAndDocumentTypeAndTypeAccountName(personClientAccountDto.getClient().getNumberDocument(),
@@ -57,7 +57,7 @@ public class AccountValidationCreationService {
                 .flatMap(x ->(x.size() == personalAccountDto.getMaxPerClient()) ? Mono.error(new GenericException("Limit account per client exceed")) : Mono.just(true));
     }
 
-    public Mono<Boolean> validateMaxPerClient(BusinessAccountDto businessAccountDto,
+    private Mono<Boolean> validateMaxPerClient(BusinessAccountDto businessAccountDto,
                                                CompanyClientAccountDto companyClientAccountDto) {
         return companyClientAccountService.findByDocumentNumberAndDocumentTypeAndTypeAccountName(companyClientAccountDto.getClient().getNumberDocument(),
                         companyClientAccountDto.getClient().getDocumentType(), companyClientAccountDto.getTypeAccount().getName())
@@ -65,15 +65,29 @@ public class AccountValidationCreationService {
                 .flatMap(x -> (x.size() == businessAccountDto.getMaxPerClient() ? Mono.error(new GenericException("Limit account per client exceed")) : Mono.just(true)));
     }
 
-    public Mono<PersonalAccountDto> validateTypeAccountExists(PersonClientAccountDto personClientAccountDto) {
+    private Mono<PersonalAccountDto> validateTypeAccountExists(PersonClientAccountDto personClientAccountDto) {
         return personalAccountService.findByName(personClientAccountDto.getTypeAccount().getName())
                 .switchIfEmpty(Mono.error(new GenericException("Account Type Not Found")))
                 .onErrorResume(Mono::error);
     }
 
-    public Mono<BusinessAccountDto> validateTypeAccountExists(CompanyClientAccountDto companyClientAccountDto) {
+    private Mono<BusinessAccountDto> validateTypeAccountExists(CompanyClientAccountDto companyClientAccountDto) {
         return businessAccountService.findByName(companyClientAccountDto.getTypeAccount().getName())
                 .switchIfEmpty(Mono.error(new GenericException("Account Type Not Found")))
+                .onErrorResume(Mono::error);
+    }
+
+    public Mono<BusinessAccountDto> validate(CompanyClientAccountDto companyClientAccountDto) {
+        return validateTypeAccountExists(companyClientAccountDto)
+                .flatMap(accountType -> validateMaxPerClient(accountType, companyClientAccountDto).map(maxClientVal -> accountType).onErrorResume(Mono::error)
+                        .flatMap(z -> validateOpenBalance(accountType, companyClientAccountDto).map(a -> accountType))).onErrorResume(Mono::error)
+                .onErrorResume(Mono::error);
+    }
+
+    public Mono<PersonalAccountDto> validate(PersonClientAccountDto personClientAccountDto) {
+        return validateTypeAccountExists(personClientAccountDto)
+                .flatMap(accountType -> validateMaxPerClient(accountType, personClientAccountDto).map(maxClientVal -> accountType).onErrorResume(Mono::error)
+                        .flatMap(z -> validateOpenBalance(accountType, personClientAccountDto).map(a -> accountType))).onErrorResume(Mono::error)
                 .onErrorResume(Mono::error);
     }
 

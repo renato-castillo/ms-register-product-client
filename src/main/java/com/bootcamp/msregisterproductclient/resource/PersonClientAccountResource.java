@@ -8,7 +8,6 @@ import com.bootcamp.msregisterproductclient.exception.ModelNotFoundException;
 import com.bootcamp.msregisterproductclient.service.IPersonClientAccountService;
 import com.bootcamp.msregisterproductclient.util.AccountValidationCreationService;
 import com.bootcamp.msregisterproductclient.util.MapperUtil;
-import com.bootcamp.msregisterproductclient.webclient.IPersonalAccountService;
 import com.bootcamp.msregisterproductclient.webclient.dto.PersonalAccountDto;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,36 +25,22 @@ public class PersonClientAccountResource extends MapperUtil {
     private IPersonClientAccountService iPersonClientAccountService;
 
     @Autowired
-    private IPersonalAccountService personalAccountService;
-
-    @Autowired
     private AccountValidationCreationService accountValidationCreationService;
-
-    private Mono<PersonalAccountDto> validate(PersonClientAccountDto personClientAccountDto) {
-
-        return accountValidationCreationService.validateTypeAccountExists(personClientAccountDto)
-                .flatMap(accountType -> accountValidationCreationService.validateMaxPerClient(accountType, personClientAccountDto).map(maxClientVal -> accountType).onErrorResume(Mono::error)
-                        .flatMap(z -> accountValidationCreationService.validateOpenBalance(accountType, personClientAccountDto).map(a -> accountType))).onErrorResume(Mono::error)
-                .onErrorResume(Mono::error);
-    }
 
     public Mono<PersonClientAccountDto> create(PersonClientAccountDto personClientAccountDto){
         PersonClientAccount personClientAccount = map(personClientAccountDto,PersonClientAccount.class);
         personClientAccount.setId(new ObjectId().toString());
         personClientAccount.setCreatedAt(LocalDateTime.now());
+        personClientAccount.setAccountNumber(UUID.randomUUID().toString());
 
         if(personClientAccountDto.getClient().getClientType().equalsIgnoreCase("PERSONAL")) {
-            return validate(personClientAccountDto).flatMap(x -> {
-                        String account = UUID.randomUUID().toString();
+            return accountValidationCreationService.validate(personClientAccountDto).flatMap(x -> {
                         personClientAccount.setTypeAccount(new TypeAccount(x.getName(), x.getMaxMonthlyMovements()));
-                        personClientAccount.setAccountNumber(account);
-
                         return iPersonClientAccountService.save(personClientAccount).map(y -> map(y, PersonClientAccountDto.class));
                     }).onErrorResume(Mono::error);
         }
 
         return Mono.error(new GenericException("Client Type Not Supported"));
-
 
     }
 
@@ -72,6 +57,7 @@ public class PersonClientAccountResource extends MapperUtil {
                     return iPersonClientAccountService.save(personClientAccount).map(y->map(y,PersonClientAccountDto.class));
                 });
     }
+
     public Mono<PersonClientAccountDto> findById(String id){
         return iPersonClientAccountService.findById(id)
                 .switchIfEmpty(Mono.error(new ModelNotFoundException()))

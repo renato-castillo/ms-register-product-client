@@ -28,32 +28,21 @@ public class CompanyClientAccountResource  extends MapperUtil {
     private ICompanyClientAccountService iCompanyClientAccountService;
 
     @Autowired
-    private IBusinessAccountService businessAccountService;
-
-    @Autowired
     private AccountValidationCreationService accountValidationCreationService;
-
-    private Mono<BusinessAccountDto> validate(CompanyClientAccountDto companyClientAccountDto) {
-        return accountValidationCreationService.validateTypeAccountExists(companyClientAccountDto)
-                .flatMap(accountType -> accountValidationCreationService.validateMaxPerClient(accountType, companyClientAccountDto).map(maxClientVal -> accountType).onErrorResume(Mono::error)
-                        .flatMap(z -> accountValidationCreationService.validateOpenBalance(accountType, companyClientAccountDto).map(a -> accountType))).onErrorResume(Mono::error)
-                .onErrorResume(Mono::error);
-    }
 
     public Mono<CompanyClientAccountDto> create(CompanyClientAccountDto companyClientAccountDto){
 
         CompanyClientAccount companyClientAccount = map(companyClientAccountDto,CompanyClientAccount.class);
 
         if(companyClientAccount.getClient().getClientType().equalsIgnoreCase("BUSINESS")) {
-            businessAccountService.findByName(companyClientAccountDto.getTypeAccount().getName())
-                    .switchIfEmpty(Mono.error(new GenericException("Account Type Not Found")))
-                    .flatMap(y -> validate(companyClientAccountDto).flatMap(x -> {
-                        String account = UUID.randomUUID().toString();
-                        companyClientAccountDto.setTypeAccount(new TypeAccount(x.getName(), x.getMaxPerClient()));
-                        companyClientAccountDto.setAccountNumber(account);
 
-                        return iCompanyClientAccountService.save(companyClientAccount).map(entity -> map(entity, CompanyClientAccountDto.class));
-                    })).onErrorResume(Mono::error);
+            return accountValidationCreationService.validate(companyClientAccountDto).flatMap(y -> {
+                String account = UUID.randomUUID().toString();
+                companyClientAccountDto.setTypeAccount(new TypeAccount(y.getName(), y.getMaxPerClient()));
+                companyClientAccountDto.setAccountNumber(account);
+
+                return iCompanyClientAccountService.save(companyClientAccount).map(entity -> map(entity, CompanyClientAccountDto.class));
+            }).onErrorResume(Mono::error);
         }
 
         return Mono.error(new GenericException("Client Type Not Supported"));
@@ -73,7 +62,7 @@ public class CompanyClientAccountResource  extends MapperUtil {
                 });
     }
 
-    public Mono<CompanyClientAccountDto> findById(String id){
+    public Mono<CompanyClientAccountDto> findById(String id) {
         return iCompanyClientAccountService.findById(id)
                 .switchIfEmpty(Mono.error(new Exception()))
                 .map(x-> map(x,CompanyClientAccountDto.class));
@@ -81,15 +70,14 @@ public class CompanyClientAccountResource  extends MapperUtil {
 
     public Mono<CompanyClientAccountDto> findByDocumentNumberAndDocumentTypeAndAccount(String documentNumber,
                                                                                        String documentType,
-                                                                                       String account){
+                                                                                       String account) {
         return iCompanyClientAccountService.findByDocumentNumberAndDocumentTypeAndAccount(documentNumber,
                         documentType, account)
                 .switchIfEmpty(Mono.error(new Exception()))
                 .map(x-> map(x,CompanyClientAccountDto.class));
     }
 
-    public Mono<Void> delete(CompanyClientAccountDto companyClientAccountDto)
-    {
+    public Mono<Void> delete(CompanyClientAccountDto companyClientAccountDto) {
         return iCompanyClientAccountService.findById(companyClientAccountDto.getId())
                 .switchIfEmpty(Mono.error(new Exception()))
                 .flatMap(x-> iCompanyClientAccountService.deleteById(companyClientAccountDto.getId()));
