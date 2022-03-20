@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-public class CompanyClientAccountResource  extends MapperUtil {
+public class CompanyClientAccountResource extends MapperUtil {
 
     @Autowired
     private ICompanyClientAccountService iCompanyClientAccountService;
@@ -34,12 +34,13 @@ public class CompanyClientAccountResource  extends MapperUtil {
 
         CompanyClientAccount companyClientAccount = map(companyClientAccountDto,CompanyClientAccount.class);
 
+        companyClientAccountDto.setAccountNumber(UUID.randomUUID().toString());
+
         if(companyClientAccount.getClient().getClientType().equalsIgnoreCase("BUSINESS")) {
 
             return accountValidationCreationService.validate(companyClientAccountDto).flatMap(y -> {
-                String account = UUID.randomUUID().toString();
                 companyClientAccountDto.setTypeAccount(new TypeAccount(y.getName(), y.getMaxPerClient()));
-                companyClientAccountDto.setAccountNumber(account);
+
 
                 return iCompanyClientAccountService.save(companyClientAccount).map(entity -> map(entity, CompanyClientAccountDto.class));
             }).onErrorResume(Mono::error);
