@@ -3,7 +3,9 @@ spring:
     name: ms-register-product-client
   cloud:
     config:
-      url: http://localhost:8888
-config:
-  base:
-    endpoint: http://localhost:8081/api
+      url: http://192.168.88.26:8888
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://192.168.88.26:8761/eureka/
