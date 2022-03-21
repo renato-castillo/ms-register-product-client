@@ -35,7 +35,8 @@ public class PersonClientAccountResource extends MapperUtil {
 
         if(personClientAccountDto.getClient().getClientType().equalsIgnoreCase("PERSONAL")) {
             return accountValidationCreationService.validate(personClientAccountDto).flatMap(x -> {
-                        personClientAccount.setTypeAccount(new TypeAccount(x.getName(), x.getMaxMonthlyMovements()));
+                        personClientAccount.setTypeAccount(new TypeAccount(x.getName(), x.getMaxMonthlyMovements(),
+                                x.getLimitWithoutCommission(), x.getCommissionTransaction()));
                         return iPersonClientAccountService.save(personClientAccount).map(y -> map(y, PersonClientAccountDto.class));
                     }).onErrorResume(Mono::error);
         }

@@ -39,7 +39,8 @@ public class CompanyClientAccountResource extends MapperUtil {
         if(companyClientAccount.getClient().getClientType().equalsIgnoreCase("BUSINESS")) {
 
             return accountValidationCreationService.validate(companyClientAccountDto).flatMap(y -> {
-                companyClientAccountDto.setTypeAccount(new TypeAccount(y.getName(), y.getMaxPerClient()));
+                companyClientAccountDto.setTypeAccount(new TypeAccount(y.getName(), y.getMaxMonthlyMovements(),
+                        y.getLimitWithoutCommission(), y.getCommissionTransaction()));
 
 
                 return iCompanyClientAccountService.save(companyClientAccount).map(entity -> map(entity, CompanyClientAccountDto.class));

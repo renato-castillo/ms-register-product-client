@@ -13,6 +13,12 @@ public class BusinessAccountDto {
 
     private Integer maxPerClient;
 
+    private Integer maxMonthlyMovements;
+
     private Float minOpenBalance;
+
+    private Integer limitWithoutCommission;
+
+    private Float commissionTransaction;
 
 }

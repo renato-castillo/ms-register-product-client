@@ -22,4 +22,8 @@ public class PersonalAccountDto {
     private Integer maxPerClient;
 
     private Float minOpenBalance;
+
+    private Integer limitWithoutCommission;
+
+    private Float commissionTransaction;
 }
